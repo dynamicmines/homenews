@@ -1,0 +1,61 @@
+{
+  "kind": "collectionType",
+  "collectionName": "sources",
+  "info": {
+    "singularName": "source",
+    "pluralName": "sources",
+    "displayName": "Source"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "website",
+        "rss",
+        "telegram",
+        "manual"
+      ]
+    },
+    "isActive": {
+      "type": "boolean"
+    },
+    "description": {
+      "type": "text"
+    },
+    "allowedDomain": {
+      "type": "string"
+    },
+    "sourceCategory": {
+      "type": "enumeration",
+      "enum": [
+        "zkh",
+        "roads",
+        "water",
+        "electricity",
+        "heating",
+        "government",
+        "emergency"
+      ]
+    },
+    "parseMode": {
+      "type": "enumeration",
+      "enum": [
+        "html",
+        "rss",
+        "manual",
+        "govkz",
+        "telegram"
+      ]
+    }
+  }
+}

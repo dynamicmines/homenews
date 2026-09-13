@@ -1,0 +1,93 @@
+{
+  "kind": "collectionType",
+  "collectionName": "ai_drafts",
+  "info": {
+    "singularName": "ai-draft",
+    "pluralName": "ai-drafts",
+    "displayName": "AI Draft "
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "originalTitle": {
+      "type": "string"
+    },
+    "originalUrl": {
+      "type": "string"
+    },
+    "originalText": {
+      "type": "text"
+    },
+    "prompt": {
+      "type": "text"
+    },
+    "generatedTitleRu": {
+      "type": "string"
+    },
+    "generatedTitleKz": {
+      "type": "string"
+    },
+    "generatedSummaryRu": {
+      "type": "text"
+    },
+    "generatedSummaryKz": {
+      "type": "text"
+    },
+    "generatedContentRu": {
+      "type": "text"
+    },
+    "generatedContentKz": {
+      "type": "text"
+    },
+    "suggestedUrgency": {
+      "type": "enumeration",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "draftStatus": {
+      "type": "enumeration",
+      "enum": [
+        "new",
+        "review",
+        "approved",
+        "rejected"
+      ]
+    },
+    "sourceName": {
+      "type": "string"
+    },
+    "sourceUrl": {
+      "type": "string"
+    },
+    "suggestedCategoryName": {
+      "type": "string"
+    },
+    "processingPrompt": {
+      "type": "text"
+    },
+    "stylePrompt": {
+      "type": "text"
+    },
+    "adminComment": {
+      "type": "text"
+    },
+    "coverImage": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "originalImageUrl": {
+      "type": "string"
+    },
+    "originalImageUrls": {
+      "type": "json"
+    }
+  }
+}

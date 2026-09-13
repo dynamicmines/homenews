@@ -1,0 +1,27 @@
+{
+  "kind": "singleType",
+  "collectionName": "ai_settings",
+  "info": {
+    "singularName": "ai-setting",
+    "pluralName": "ai-settings",
+    "displayName": "AI Setting"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "defaultStylePrompt": {
+      "type": "text"
+    },
+    "factCheckRule": {
+      "type": "text"
+    },
+    "translationRule": {
+      "type": "text"
+    },
+    "customRules": {
+      "type": "json"
+    }
+  }
+}

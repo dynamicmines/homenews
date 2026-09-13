@@ -1,0 +1,39 @@
+{
+  "kind": "singleType",
+  "collectionName": "site_settings",
+  "info": {
+    "singularName": "site-setting",
+    "pluralName": "site-settings",
+    "displayName": "Site Setting"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "siteNameRu": {
+      "type": "string"
+    },
+    "siteNameKz": {
+      "type": "string"
+    },
+    "descriptionRu": {
+      "type": "string"
+    },
+    "descriptionKz": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "contactEmail": {
+      "type": "email"
+    },
+    "footerTextRu": {
+      "type": "text"
+    },
+    "footerTextKz": {
+      "type": "text"
+    }
+  }
+}

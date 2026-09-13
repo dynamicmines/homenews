@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>e-Knot · Панель модератора</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+
+<div id="app">
+
+  <header class="topbar">
+    <div class="topbar-title">
+      <span class="mark"></span>
+      <div>
+        <h1>e-Knot</h1>
+        <p>Панель модератора</p>
+      </div>
+    </div>
+    <div class="topbar-chip" id="pendingChip">— черновиков</div>
+  </header>
+
+  <main id="views">
+
+    <!-- DASHBOARD -->
+    <section class="view" data-view="dashboard">
+      <div class="stat-grid">
+        <div class="stat-card" data-tone="amber">
+          <span class="stat-label">На проверке</span>
+          <span class="stat-value" id="statPending">—</span>
+        </div>
+        <div class="stat-card" data-tone="blue">
+          <span class="stat-label">На доработке</span>
+          <span class="stat-value" id="statReview">—</span>
+        </div>
+        <div class="stat-card" data-tone="green">
+          <span class="stat-label">Активных источников</span>
+          <span class="stat-value" id="statSources">—</span>
+        </div>
+        <div class="stat-card" data-tone="neutral">
+          <span class="stat-label">Опубликовано сегодня</span>
+          <span class="stat-value" id="statToday">—</span>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="runParserBtn">
+        Запустить парсинг сейчас
+      </button>
+      <p class="hint" id="parserHint">Автопарсинг также работает по расписанию, пока запущен Strapi.</p>
+    </section>
+
+    <!-- DRAFTS -->
+    <section class="view" data-view="drafts" hidden>
+      <div class="segmented" id="draftStatusTabs">
+        <button class="segmented-item is-active" data-status="new">Новые</button>
+        <button class="segmented-item" data-status="review">Правки</button>
+        <button class="segmented-item" data-status="approved">Готово</button>
+        <button class="segmented-item" data-status="rejected">Отказ</button>
+      </div>
+      <div id="draftsList" class="list"></div>
+      <div class="empty-state" id="draftsEmpty" hidden>
+        <p>Здесь пока пусто.</p>
+        <p class="empty-sub">Новые черновики появятся после парсинга источников.</p>
+      </div>
+    </section>
+
+    <!-- DRAFT DETAIL (overlay) -->
+    <section class="view view-overlay" data-view="draft-detail" hidden>
+      <button class="back-btn" id="draftDetailBack">← Назад к списку</button>
+      <div id="draftDetailBody"></div>
+    </section>
+
+    <!-- SOURCES -->
+    <section class="view" data-view="sources" hidden>
+      <button class="btn btn-secondary btn-block" id="addSourceBtn">+ Добавить источник</button>
+      <div id="sourcesList" class="list"></div>
+    </section>
+
+    <!-- SOURCE FORM (overlay) -->
+    <section class="view view-overlay" data-view="source-form" hidden>
+      <button class="back-btn" id="sourceFormBack">← Назад к источникам</button>
+      <div id="sourceFormBody"></div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section class="view" data-view="settings" hidden>
+      <div id="settingsBody"></div>
+    </section>
+
+  </main>
+
+  <nav class="tabbar">
+    <button class="tab is-active" data-view="dashboard">
+      <span class="tab-icon">◧</span><span>Дашборд</span>
+    </button>
+    <button class="tab" data-view="drafts">
+      <span class="tab-icon">▤</span><span>Черновики</span>
+    </button>
+    <button class="tab" data-view="sources">
+      <span class="tab-icon">◎</span><span>Источники</span>
+    </button>
+    <button class="tab" data-view="settings">
+      <span class="tab-icon">⚙</span><span>Настройки</span>
+    </button>
+  </nav>
+
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>
