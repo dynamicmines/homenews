@@ -537,7 +537,7 @@ async function uploadRemoteImageToStrapi(strapi: any, imageUrl: string, title = 
   try {
     const response = await fetch(imageUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 e-Knot News Parser/1.0',
+        'User-Agent': 'Mozilla/5.0 HomeNews Parser/1.0',
         Accept: 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
       },
     })
@@ -601,7 +601,7 @@ async function fetchRemoteImageForGemini(strapi: any, imageUrl: string) {
   try {
     const response = await fetch(imageUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 e-Knot News Parser/1.0',
+        'User-Agent': 'Mozilla/5.0 HomeNews Parser/1.0',
         Accept: 'image/avif,image/webp,image/apng,image/jpeg,image/png,image/*,*/*;q=0.8',
       },
     })
@@ -695,9 +695,9 @@ async function generateWithGemini(strapi: any, payload: any) {
     'Сделай из исходного текста полноценный черновик новости для городского портала.'
 
   const finalPrompt = `
-Ты AI-журналист городской новостной платформы e-Knot.
+Ты AI-журналист городской новостной платформы HomeNews.
 
-e-Knot пишет только о:
+HomeNews пишет только о:
 - ЖКХ;
 - коммунальных службах;
 - дорогах;
@@ -712,7 +712,7 @@ e-Knot пишет только о:
 Если исходный материал НЕ относится к этим темам, верни:
 {
   "isRelevant": false,
-  "rejectionReason": "Материал не относится к тематике e-Knot"
+  "rejectionReason": "Материал не относится к тематике HomeNews"
 }
 
 Если материал подходит, подготовь черновик новости.
@@ -765,7 +765,7 @@ ${imageUrl ? 'К материалу может быть прикреплено �
 }
 `
 
-  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+  const model = process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite'
 
   const imageForGemini = imageUrl
     ? await fetchRemoteImageForGemini(strapi, imageUrl)
@@ -853,7 +853,7 @@ ${imageUrl ? 'К материалу может быть прикреплено �
   if (generated.isRelevant === false) {
     return {
       rejected: true,
-      reason: generated.rejectionReason || 'Материал не относится к тематике e-Knot',
+      reason: generated.rejectionReason || 'Материал не относится к тематике HomeNews',
     }
   }
 
@@ -955,7 +955,7 @@ async function processTelegramSource(strapi: any, source: any, limit = 5, proces
 
   const response = await fetch(feedUrl, {
     headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; e-Knot News Parser/1.0; +https://eknot.local)',
+      'User-Agent': 'Mozilla/5.0 (compatible; HomeNews Parser/1.0)',
       Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'Accept-Language': 'ru-RU,ru;q=0.9,kk;q=0.8,en;q=0.5',
     },
@@ -1094,7 +1094,7 @@ async function processRssSource(strapi: any, source: any, limit = 5, processingP
 
   const response = await fetch(feedUrl, {
     headers: {
-      'User-Agent': 'Mozilla/5.0 (compatible; e-Knot News Parser/1.0; +https://eknot.local)',
+      'User-Agent': 'Mozilla/5.0 (compatible; HomeNews Parser/1.0)',
       Accept: 'application/rss+xml, application/xml, text/xml;q=0.9,*/*;q=0.8',
       'Accept-Language': 'ru-RU,ru;q=0.9,kk;q=0.8,en;q=0.5',
     },
@@ -1188,7 +1188,7 @@ async function processRssSource(strapi: any, source: any, limit = 5, processingP
         imageUrls: item.imageUrls,
         processingPrompt:
           processingPrompt ||
-          'Материал получен из официальной RSS-ленты Акимата города Астаны. Сделай городскую новость для e-Knot. Сохрани важные факты, даты, адреса, ограничения, рекомендации и официальные формулировки. Не выдумывай факты.',
+          'Материал получен из официальной RSS-ленты Акимата города Астаны. Сделай городскую новость для HomeNews. Сохрани важные факты, даты, адреса, ограничения, рекомендации и официальные формулировки. Не выдумывай факты.',
       })
 
       if (result.duplicate) {
@@ -1311,7 +1311,7 @@ module.exports = factories.createCoreController('api::ai-draft.ai-draft', ({ str
       }
 
       if (!isRelevantByKeywords(originalText)) {
-        return ctx.badRequest('Материал не относится к тематике e-Knot')
+        return ctx.badRequest('Материал не относится к тематике HomeNews')
       }
 
       const result = await generateWithGemini(strapi, {
@@ -1387,7 +1387,7 @@ module.exports = factories.createCoreController('api::ai-draft.ai-draft', ({ str
 
       const response = await fetch(articleUrl, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; e-Knot News Parser/1.0; +https://eknot.local)',
+          'User-Agent': 'Mozilla/5.0 (compatible; HomeNews Parser/1.0)',
           Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
           'Accept-Language': 'ru-RU,ru;q=0.9,kk;q=0.8,en;q=0.5',
         },
@@ -1421,7 +1421,7 @@ module.exports = factories.createCoreController('api::ai-draft.ai-draft', ({ str
         imageUrl,
         processingPrompt:
           processingPrompt ||
-          `Материал получен из источника категории ${source.sourceCategory || 'government'}. Сделай городскую новость для e-Knot.`,
+          `Материал получен из источника категории ${source.sourceCategory || 'government'}. Сделай городскую новость для HomeNews.`,
       })
 
       if (result.duplicate) {

@@ -17,7 +17,7 @@ export default {
     const limit = process.env.AUTO_PARSER_LIMIT || '3'
 
     strapi.log.info(
-      `Автопарсинг e-Knot: cron=${cronEnabled ? 'on' : 'off'}, parser=${parserEnabled ? 'on' : 'off'}, rule=${cronRule}, limit=${limit}`
+      `Автопарсинг HomeNews: cron=${cronEnabled ? 'on' : 'off'}, parser=${parserEnabled ? 'on' : 'off'}, rule=${cronRule}, limit=${limit}`
     )
   },
 };

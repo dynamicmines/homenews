@@ -16,7 +16,7 @@ export function createBot() {
   bot.use((ctx, next) => {
     const userId = ctx.from?.id
     if (!isAdmin(userId)) {
-      return ctx.reply('Доступ ограничен. Обратитесь к владельцу e-Knot News.')
+      return ctx.reply('Доступ ограничен. Обратитесь к владельцу HomeNews.')
     }
     return next()
   })
@@ -24,14 +24,14 @@ export function createBot() {
   bot.command('start', async (ctx) => {
     if (!MINI_APP_URL) {
       return ctx.reply(
-        'e-Knot News — панель модератора.\n\n' +
+        'HomeNews — панель модератора.\n\n' +
           'MINI_APP_URL ещё не настроен в .env бота, поэтому кнопка приложения недоступна. ' +
           'Добавь публичную ссылку (например, из ngrok) и перезапусти бота.'
       )
     }
 
     await ctx.reply(
-      'e-Knot News — панель модератора\n\n' +
+      'HomeNews — панель модератора\n\n' +
         'Здесь можно проверять AI-черновики новостей, управлять источниками и настройками парсинга прямо из Telegram.',
       Markup.inlineKeyboard([Markup.button.webApp('Открыть панель', MINI_APP_URL)])
     )
@@ -42,7 +42,7 @@ export function createBot() {
       const stats = await strapi.getDashboardStats()
       await ctx.reply(
         [
-          'Статус e-Knot News',
+          'Статус HomeNews',
           '',
           `Черновиков на проверке: ${stats.pendingDrafts}`,
           `На доработке: ${stats.reviewDrafts}`,

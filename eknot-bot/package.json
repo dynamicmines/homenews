@@ -2,7 +2,7 @@
   "name": "eknot-bot",
   "version": "0.1.0",
   "private": true,
-  "description": "Telegram bot + Mini App admin panel for e-Knot News (drafts, sources, settings)",
+  "description": "Telegram bot + Mini App admin panel for HomeNews (drafts, sources, settings)",
   "type": "module",
   "main": "src/index.js",
   "scripts": {
