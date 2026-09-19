@@ -465,6 +465,9 @@ function PortalHome({ lang, articles, categories, selectedCategory, openArticle,
 }
 
 function Footer({ siteSetting, siteName, footerText }) {
+  const contactEmail = siteSetting?.contactEmail || ''
+  const showContactEmail = contactEmail && !contactEmail.toLowerCase().includes('eknot')
+
   return (
     <footer className="mt-14 border-t border-border bg-card">
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-10 md:grid-cols-[1.4fr_1fr] md:items-end">
@@ -476,7 +479,7 @@ function Footer({ siteSetting, siteName, footerText }) {
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">{footerText}</p>
         </div>
         <div className="flex flex-col gap-1 text-sm text-muted-foreground md:items-end">
-          {siteSetting?.contactEmail && <span>{siteSetting.contactEmail}</span>}
+          {showContactEmail && <span>{contactEmail}</span>}
           {siteSetting?.phone && <span>{siteSetting.phone}</span>}
           <span>Powered by Strapi CMS</span>
         </div>
