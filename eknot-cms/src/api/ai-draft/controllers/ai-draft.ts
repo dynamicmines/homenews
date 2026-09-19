@@ -569,6 +569,8 @@ async function findExistingDraftByOriginalUrl(strapi: any, originalUrl: string) 
 async function uploadRemoteImageToStrapi(strapi: any, imageUrl: string, title = 'ai-draft-image') {
   if (!imageUrl || imageUrl.startsWith('data:')) return null
 
+  let tmpPath = ''
+
   try {
     const response = await fetch(imageUrl, {
       headers: {
@@ -606,27 +608,29 @@ async function uploadRemoteImageToStrapi(strapi: any, imageUrl: string, title = 
       .slice(0, 60) || 'ai-draft-image'
 
     const fileName = `${safeName}-${Date.now()}${ext}`
-    const tmpPath = path.join(os.tmpdir(), fileName)
+    tmpPath = path.join(os.tmpdir(), fileName)
 
     await fs.writeFile(tmpPath, buffer)
 
     const uploadedFiles = await strapi.plugin('upload').service('upload').upload({
       data: {},
       files: {
-        path: tmpPath,
-        name: fileName,
-        type: contentType,
+        filepath: tmpPath,
+        originalFilename: fileName,
+        mimetype: contentType,
         size: buffer.length,
       },
     })
-
-    await fs.unlink(tmpPath).catch(() => null)
 
     return uploadedFiles?.[0] || null
   } catch (error) {
     strapi.log.warn('Ошибка загрузки изображения в Strapi')
     strapi.log.warn(error)
     return null
+  } finally {
+    if (tmpPath) {
+      await fs.unlink(tmpPath).catch(() => null)
+    }
   }
 }
 
