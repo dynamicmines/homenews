@@ -298,6 +298,33 @@ function normalizeImageUrl(url: string) {
     .trim()
 }
 
+function normalizeContentUrl(value: string) {
+  const rawUrl = normalizeImageUrl(value)
+
+  if (!rawUrl) return ''
+
+  try {
+    const url = new URL(rawUrl)
+
+    url.hash = ''
+    url.searchParams.delete('single')
+
+    Array.from(url.searchParams.keys()).forEach((key) => {
+      if (/^(utm_.+|fbclid|gclid|yclid)$/i.test(key)) {
+        url.searchParams.delete(key)
+      }
+    })
+
+    if (url.pathname.length > 1) {
+      url.pathname = url.pathname.replace(/\/+$/, '')
+    }
+
+    return url.toString()
+  } catch {
+    return rawUrl.replace(/[?#].*$/, '').replace(/\/+$/, '')
+  }
+}
+
 function extractArticleTextFromHtml(html: string) {
   const $ = cheerio.load(html)
   const parts: string[] = []
@@ -410,15 +437,6 @@ function extractTelegramImageUrls(message: any, $: any) {
     }
   })
 
-  message.find('img').each((_: any, element: any) => {
-    const url = normalizeImageUrl($(element).attr('src') || '')
-
-    // Telegram avatars are also img tags; use only actual Telegram CDN images as a fallback.
-    if (url && url.includes('telesco.pe') && !urls.includes(url)) {
-      urls.push(url)
-    }
-  })
-
   return urls
 }
 
@@ -503,9 +521,12 @@ function extractTelegramPostsFromHtml(html: string, feedUrl: string) {
     })
   })
 
-  return posts.filter((post, index, arr) => {
-    return arr.findIndex((item) => item.url === post.url) === index
-  })
+  return posts
+    .filter((post, index, arr) => {
+      return arr.findIndex((item) => item.url === post.url) === index
+    })
+    // Telegram's public HTML is oldest-first; parsing must start from fresh posts.
+    .reverse()
 }
 
 async function getAiSetting(strapi: any) {
@@ -524,11 +545,14 @@ async function getAiSetting(strapi: any) {
 async function findExistingDraftByOriginalUrl(strapi: any, originalUrl: string) {
   if (!originalUrl) return null
 
+  const normalizedUrl = normalizeContentUrl(originalUrl)
+  const urlCandidates = Array.from(new Set([originalUrl, normalizedUrl].filter(Boolean)))
+
   try {
     const existing = await strapi.documents('api::ai-draft.ai-draft').findMany({
       filters: {
         originalUrl: {
-          $eq: originalUrl,
+          $in: urlCandidates,
         },
       },
       status: 'published',
@@ -663,11 +687,13 @@ async function generateWithGemini(strapi: any, payload: any) {
     imageUrls = [],
   } = payload
 
+  const normalizedOriginalUrl = normalizeContentUrl(originalUrl || sourceUrl)
+
   if (!process.env.GEMINI_API_KEY) {
     throw new Error('GEMINI_API_KEY не найден в .env')
   }
 
-  const existingDraft = await findExistingDraftByOriginalUrl(strapi, originalUrl)
+  const existingDraft = await findExistingDraftByOriginalUrl(strapi, normalizedOriginalUrl)
 
   if (existingDraft) {
     return {
@@ -862,9 +888,32 @@ ${imageUrl ? 'К материалу может быть прикреплено �
   }
 
   if (generated.isRelevant === false) {
+    const rejectionReason =
+      generated.rejectionReason || 'Материал не относится к тематике HomeNews'
+
+    const rejectedDraft = await strapi.documents('api::ai-draft.ai-draft').create({
+      data: {
+        sourceName,
+        sourceUrl: sourceUrl || normalizedOriginalUrl,
+        originalTitle,
+        originalUrl: normalizedOriginalUrl,
+        originalText,
+        originalImageUrl: imageUrl || '',
+        originalImageUrls: Array.isArray(imageUrls) ? imageUrls.filter(Boolean) : [],
+        prompt: finalPrompt,
+        processingPrompt,
+        stylePrompt: defaultStylePrompt,
+        suggestedUrgency: 'low',
+        adminComment: rejectionReason,
+        draftStatus: 'rejected',
+      },
+      status: 'published',
+    })
+
     return {
       rejected: true,
-      reason: generated.rejectionReason || 'Материал не относится к тематике HomeNews',
+      reason: rejectionReason,
+      draft: rejectedDraft,
     }
   }
 
@@ -883,7 +932,7 @@ ${imageUrl ? 'К материалу может быть прикреплено �
       sourceName,
       sourceUrl: sourceUrl || originalUrl,
       originalTitle,
-      originalUrl: originalUrl || sourceUrl,
+      originalUrl: normalizedOriginalUrl,
       originalText,
       originalImageUrl: allImageUrls[0] || '',
       originalImageUrls: allImageUrls,
@@ -990,15 +1039,21 @@ async function processTelegramSource(strapi: any, source: any, limit = 5, proces
   const html = await response.text()
   const posts = extractTelegramPostsFromHtml(html, feedUrl)
 
+  const perSourceLimit = Math.max(1, Number(source.limitPerRun || limit) || 5)
+  const scanLimit = Math.min(100, Math.max(30, perSourceLimit * 10))
+
   const relevantPosts = posts
     .filter((post) => isRelevantByKeywords(post.text) || Boolean(post.imageUrl))
-    .slice(0, Number(limit) || 5)
+    .slice(0, scanLimit)
 
   const createdDrafts = []
   const rejectedItems = []
   let duplicateCount = 0
+  let aiAttemptCount = 0
 
   for (const post of relevantPosts) {
+    if (aiAttemptCount >= perSourceLimit) break
+
     try {
       const result = await generateWithGemini(strapi, {
         sourceName: source.name,
@@ -1018,6 +1073,8 @@ async function processTelegramSource(strapi: any, source: any, limit = 5, proces
         continue
       }
 
+      aiAttemptCount += 1
+
       if (result.rejected) {
         rejectedItems.push({
           title: post.title,
@@ -1028,6 +1085,7 @@ async function processTelegramSource(strapi: any, source: any, limit = 5, proces
         createdDrafts.push(result.draft)
       }
     } catch (error: any) {
+      aiAttemptCount += 1
       rejectedItems.push({
         title: post.title,
         url: post.url,
@@ -1045,6 +1103,7 @@ async function processTelegramSource(strapi: any, source: any, limit = 5, proces
     message: `Пакетный парсинг завершён. Создано черновиков: ${createdDrafts.length}`,
     parsedCount: posts.length,
     relevantCount: relevantPosts.length,
+    aiAttemptCount,
     createdCount: createdDrafts.length,
     duplicateCount,
     rejectedCount: rejectedItems.length,
@@ -1140,21 +1199,26 @@ async function processRssSource(strapi: any, source: any, limit = 5, processingP
       const pubDate = normalizeText(el.find('pubDate').first().text())
 
       const descriptionRaw = el.find('description').first().text() || ''
-      const descriptionText = normalizeText(
-        cheerio
-          .load(descriptionRaw)
-          .text()
-      )
+      const descriptionDom = cheerio.load(descriptionRaw)
+      const descriptionText = normalizeText(descriptionDom.text())
 
       const enclosureUrl = normalizeImageUrl(el.find('enclosure').attr('url') || '')
+      const mediaUrl = normalizeImageUrl(
+        el.find('media\\:content').attr('url') ||
+        el.find('media\\:thumbnail').attr('url') ||
+        ''
+      )
+      const descriptionImageUrl = normalizeImageUrl(descriptionDom('img').first().attr('src') || '')
 
       let imageUrl = ''
 
-      if (enclosureUrl) {
+      const rawImageUrl = enclosureUrl || mediaUrl || descriptionImageUrl
+
+      if (rawImageUrl) {
         try {
-          imageUrl = new URL(enclosureUrl, feedUrl).toString()
+          imageUrl = new URL(rawImageUrl, feedUrl).toString()
         } catch {
-          imageUrl = enclosureUrl
+          imageUrl = rawImageUrl
         }
       }
 
@@ -1174,20 +1238,24 @@ async function processRssSource(strapi: any, source: any, limit = 5, processingP
       return item.title && item.url && item.text && item.text.length >= 40
     })
 
-  const perSourceLimit = Number(source.limitPerRun || limit) || 5
+  const perSourceLimit = Math.max(1, Number(source.limitPerRun || limit) || 5)
+  const scanLimit = Math.min(100, Math.max(30, perSourceLimit * 10))
 
   const relevantItems = items
     .filter((item: any) => {
       const combined = `${item.title}\n${item.text}`
       return isRelevantByKeywords(combined)
     })
-    .slice(0, perSourceLimit)
+    .slice(0, scanLimit)
 
   const createdDrafts = []
   const rejectedItems = []
   let duplicateCount = 0
+  let aiAttemptCount = 0
 
   for (const item of relevantItems) {
+    if (aiAttemptCount >= perSourceLimit) break
+
     try {
       const result = await generateWithGemini(strapi, {
         sourceName: source.name,
@@ -1207,6 +1275,8 @@ async function processRssSource(strapi: any, source: any, limit = 5, processingP
         continue
       }
 
+      aiAttemptCount += 1
+
       if (result.rejected) {
         rejectedItems.push({
           title: item.title,
@@ -1217,6 +1287,7 @@ async function processRssSource(strapi: any, source: any, limit = 5, processingP
         createdDrafts.push(result.draft)
       }
     } catch (error: any) {
+      aiAttemptCount += 1
       rejectedItems.push({
         title: item.title,
         url: item.url,
@@ -1234,6 +1305,7 @@ async function processRssSource(strapi: any, source: any, limit = 5, processingP
     message: `RSS-парсинг завершён. Создано черновиков: ${createdDrafts.length}`,
     parsedCount: items.length,
     relevantCount: relevantItems.length,
+    aiAttemptCount,
     createdCount: createdDrafts.length,
     duplicateCount,
     rejectedCount: rejectedItems.length,
@@ -1574,6 +1646,9 @@ module.exports = factories.createCoreController('api::ai-draft.ai-draft', ({ str
           }
 
           results.push(result)
+          strapi.log.info(
+            `Парсер ${source.name}: найдено ${result.parsedCount || 0}, кандидатов ${result.relevantCount || 0}, AI-проверок ${result.aiAttemptCount || 0}, создано ${result.createdCount || 0}, дубликатов ${result.duplicateCount || 0}, отклонено ${result.rejectedCount || 0}`
+          )
         } catch (error: any) {
           strapi.log.warn(`Источник пропущен из-за ошибки: ${source.name}`)
           strapi.log.warn(error)
