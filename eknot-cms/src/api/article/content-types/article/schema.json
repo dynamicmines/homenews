@@ -39,6 +39,12 @@
     "source": {
       "type": "string"
     },
+    "sourceUrl": {
+      "type": "string"
+    },
+    "sourceImageUrl": {
+      "type": "string"
+    },
     "urgency": {
       "type": "enumeration",
       "enum": [

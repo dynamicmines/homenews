@@ -119,10 +119,72 @@ function makeGeneratedImage(title = 'HomeNews', category = 'Город', source 
 }
 
 function getArticleImage(article, lang) {
-  return getMediaUrl(article?.coverImage) || makeGeneratedImage(
+  const uploadedImage = getMediaUrl(article?.coverImage)
+  const sourceImage = String(article?.sourceImageUrl || '').trim()
+  const telegramPost = String(article?.sourceUrl || '').trim()
+  const telegramImage = /^https:\/\/t\.me\/(?:s\/)?[a-zA-Z0-9_]+\/\d+/.test(telegramPost)
+    ? `${API_URL}/api/telegram-image?url=${encodeURIComponent(telegramPost)}`
+    : ''
+
+  return uploadedImage || sourceImage || telegramImage || makeGeneratedImage(
     getText(article, 'title', lang),
     getCategoryName(article?.category, lang),
     article?.source || article?.sourceName || 'HomeNews'
+  )
+}
+
+function ArticleImage({ article, lang, className = '', detail = false, thumbnail = false, priority = false }) {
+  const title = getText(article, 'title', lang)
+  const preferredImage = getArticleImage(article, lang)
+  const fallbackImage = makeGeneratedImage(
+    title,
+    getCategoryName(article?.category, lang),
+    article?.source || article?.sourceName || 'HomeNews'
+  )
+  const [failedImage, setFailedImage] = useState('')
+  const src = failedImage === preferredImage ? fallbackImage : preferredImage
+
+  const isGenerated = src.startsWith('data:image/svg+xml')
+  const framedIkomekImage = isIkomekArticle(article) && !isGenerated
+  const loading = priority ? 'eager' : 'lazy'
+
+  if (!framedIkomekImage) {
+    return (
+      <div className={`relative overflow-hidden bg-muted ${className}`}>
+        <img
+          src={src}
+          alt={title}
+          loading={loading}
+          decoding="async"
+          fetchPriority={priority ? 'high' : 'auto'}
+          onError={() => setFailedImage(preferredImage)}
+          className={`h-full w-full ${detail ? 'object-contain' : 'object-cover'} transition duration-500 group-hover:scale-[1.025]`}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className={`relative isolate overflow-hidden bg-slate-950 ${className}`}>
+      <img src={src} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-50 blur-2xl" />
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-950/20 via-slate-950/10 to-slate-950/60" />
+      <div className={`absolute overflow-hidden bg-white/5 shadow-2xl ring-1 ring-white/35 ${thumbnail ? 'inset-1 rounded-lg' : 'inset-2.5 rounded-xl md:inset-3'}`}>
+        <img
+          src={src}
+          alt={title}
+          loading={loading}
+          decoding="async"
+          fetchPriority={priority ? 'high' : 'auto'}
+          onError={() => setFailedImage(preferredImage)}
+          className={`h-full w-full ${detail ? 'object-contain object-top' : 'object-cover object-top'} transition duration-500 group-hover:scale-[1.025]`}
+        />
+      </div>
+      {!thumbnail && (
+        <span className="absolute bottom-5 left-5 rounded-full border border-white/25 bg-slate-950/65 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-white shadow-lg backdrop-blur-md">
+          iKOMEK109
+        </span>
+      )}
+    </div>
   )
 }
 
@@ -161,17 +223,6 @@ function isIkomekArticle(article) {
 function isAkimatArticle(article) {
   const source = getSourceString(article)
   return source.includes('акимат') || source.includes('әкім') || source.includes('gov.kz') || source.includes('astana')
-}
-
-function Placeholder({ compact = false }) {
-  return (
-    <div className="flex h-full min-h-[140px] w-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-slate-500">
-      <div className="text-center">
-        <div className={`${compact ? 'text-lg' : 'text-3xl'} font-black tracking-tight text-slate-600`}>HomeNews</div>
-        <div className="mx-auto mt-2 h-1 w-12 rounded-full bg-accent" />
-      </div>
-    </div>
-  )
 }
 
 function LanguageSwitcher({ lang, setLang }) {
@@ -271,8 +322,11 @@ function BreakingTicker({ lang, articles }) {
 
 function SmallEventCard({ article, lang, openArticle, index }) {
   return (
-    <button type="button" onClick={() => openArticle(article)} className="group grid w-full grid-cols-[34px_1fr] gap-3 border-t border-border py-3 text-left first:border-t-0 first:pt-0">
-      <span className="mt-0.5 text-lg font-black text-muted-foreground/50">{String(index + 1).padStart(2, '0')}</span>
+    <button type="button" onClick={() => openArticle(article)} className="group grid w-full grid-cols-[78px_1fr] gap-3 border-t border-border py-3 text-left first:border-t-0 first:pt-0">
+      <span className="relative block">
+        <ArticleImage article={article} lang={lang} thumbnail className="h-[72px] w-[78px] rounded-xl" />
+        <span className="absolute left-1.5 top-1.5 rounded-md bg-slate-950/75 px-1.5 py-0.5 text-[10px] font-black text-white backdrop-blur-sm">{String(index + 1).padStart(2, '0')}</span>
+      </span>
       <span className="min-w-0">
         <span className="mb-1 flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
           <span className={`rounded-full px-2 py-0.5 ${getUrgencyClass(article.urgency)}`}>{UI[lang].urgency[article.urgency] || article.urgency}</span>
@@ -287,12 +341,11 @@ function SmallEventCard({ article, lang, openArticle, index }) {
 function MainAkimatCard({ article, lang, openArticle }) {
   if (!article) return null
   const title = getText(article, 'title', lang)
-  const image = getArticleImage(article, lang)
   const summary = getText(article, 'summary', lang)
   return (
     <button type="button" onClick={() => openArticle(article)} className="group grid w-full overflow-hidden rounded-2xl border border-border bg-card text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl lg:grid-cols-[1.04fr_0.96fr]">
       <div className="relative min-h-[260px] overflow-hidden bg-muted lg:min-h-[360px]">
-        {image ? <img src={image} alt={title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : <Placeholder />}
+        <ArticleImage article={article} lang={lang} priority className="absolute inset-0 h-full w-full" />
         <div className="absolute left-4 top-4 flex flex-wrap gap-2">
           <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-foreground shadow-sm backdrop-blur">{getCategoryName(article.category, lang)}</span>
           <span className={`rounded-full px-3 py-1 text-xs font-black uppercase tracking-wide ${getUrgencyClass(article.urgency)}`}>{UI[lang].urgency[article.urgency] || article.urgency}</span>
@@ -314,14 +367,11 @@ function MainAkimatCard({ article, lang, openArticle }) {
 
 function NewsCard({ article, lang, openArticle, compact = false }) {
   const title = getText(article, 'title', lang)
-  const image = getArticleImage(article, lang)
   const summary = getText(article, 'summary', lang)
   return (
     <button type="button" onClick={() => openArticle(article)} className="group overflow-hidden rounded-xl border border-border bg-card text-left shadow-sm transition hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-lg">
       {!compact && (
-        <div className="h-40 overflow-hidden bg-muted">
-          {image ? <img src={image} alt={title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /> : <Placeholder compact />}
-        </div>
+        <ArticleImage article={article} lang={lang} className="h-48 w-full" />
       )}
       <div className="p-5">
         <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
@@ -490,7 +540,6 @@ function Footer({ siteSetting, siteName, footerText }) {
 
 function ArticleDetail({ article, lang, setLang, back }) {
   const title = getText(article, 'title', lang)
-  const image = getArticleImage(article, lang)
   const summary = getText(article, 'summary', lang)
   const content = getText(article, 'content', lang)
 
@@ -515,9 +564,7 @@ function ArticleDetail({ article, lang, setLang, back }) {
             <p className="mt-5 max-w-3xl text-lg leading-relaxed text-muted-foreground">{summary}</p>
           </div>
 
-          <div className="h-[320px] bg-muted md:h-[450px]">
-            {image ? <img src={image} alt={title} className="h-full w-full object-cover" /> : <Placeholder />}
-          </div>
+          <ArticleImage article={article} lang={lang} detail priority className="h-[340px] w-full md:h-[520px]" />
 
           <div className="grid border-y border-border md:grid-cols-3">
             <div className="border-b border-border p-5 md:border-b-0 md:border-r">

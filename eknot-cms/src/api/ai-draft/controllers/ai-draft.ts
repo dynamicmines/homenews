@@ -131,8 +131,25 @@ function getMediaId(media: any) {
 }
 
 async function resolveCoverImageForArticle(strapi: any, draft: any, category: any) {
-  // Public News should use the category image selected by the admin.
-  // Priority: Category.defaultCoverImage -> Category.defaultImageUrl -> AI Draft coverImage.
+  // Prefer the real source image. Category artwork is only a fallback.
+  const draftCoverId = getMediaId(draft.coverImage)
+
+  if (draftCoverId) {
+    return draftCoverId
+  }
+
+  if (draft.originalImageUrl) {
+    const uploadedImage = await uploadRemoteImageToStrapi(
+      strapi,
+      draft.originalImageUrl,
+      draft.generatedTitleRu || draft.originalTitle || 'article-cover'
+    )
+
+    if (uploadedImage?.id) {
+      return uploadedImage.id
+    }
+  }
+
   const categoryCoverId = getMediaId(category?.defaultCoverImage)
 
   if (categoryCoverId) {
@@ -149,12 +166,6 @@ async function resolveCoverImageForArticle(strapi: any, draft: any, category: an
     if (uploadedImage?.id) {
       return uploadedImage.id
     }
-  }
-
-  const draftCoverId = getMediaId(draft.coverImage)
-
-  if (draftCoverId) {
-    return draftCoverId
   }
 
   return null
@@ -1667,6 +1678,8 @@ module.exports = factories.createCoreController('api::ai-draft.ai-draft', ({ str
 
         district: district || '',
         source: draft.sourceName || draft.originalUrl || draft.sourceUrl || '',
+        sourceUrl: draft.originalUrl || draft.sourceUrl || '',
+        sourceImageUrl: draft.originalImageUrl || '',
         urgency: normalizeUrgency(draft.suggestedUrgency || 'medium'),
 
         isFeatured: Boolean(isFeatured),
