@@ -28,7 +28,7 @@ const UI = {
     loading: 'Загрузка новостей...',
     error: 'Не удалось загрузить данные из Strapi. Проверь, что CMS запущена и Public permissions включены.',
     empty: 'Пока нет опубликованных новостей в этом блоке.',
-    footerFallback: 'e-Knot — городская информационная платформа',
+    footerFallback: 'HomeNews — городская информационная платформа',
     descriptionFallback: 'Городские новости, ЖКХ, инфраструктура и официальные уведомления',
     materials: 'материалов',
     admin: '',
@@ -59,7 +59,7 @@ const UI = {
     loading: 'Жаңалықтар жүктелуде...',
     error: 'Strapi деректерін жүктеу мүмкін болмады. CMS қосылғанын және Public permissions берілгенін тексер.',
     empty: 'Бұл блокта әзірге жарияланған жаңалық жоқ.',
-    footerFallback: 'e-Knot — қалалық ақпараттық платформа',
+    footerFallback: 'HomeNews — қалалық ақпараттық платформа',
     descriptionFallback: 'Қалалық жаңалықтар, ТКШ, инфрақұрылым және ресми хабарламалар',
     materials: 'материал',
     admin: '',
@@ -71,6 +71,10 @@ function getText(item, field, lang) {
   return item?.[`${field}${lang === 'kz' ? 'Kz' : 'Ru'}`] || item?.[`${field}Ru`] || ''
 }
 
+function withCurrentBrand(value, fallback = '') {
+  return String(value || fallback).replace(/e[\s‑-]*knot(?:\s+news)?/gi, 'HomeNews')
+}
+
 function getMediaUrl(media) {
   const item = media?.data?.attributes || media?.data || media
   const url = item?.url
@@ -78,10 +82,10 @@ function getMediaUrl(media) {
   return url.startsWith('http') ? url : `${API_URL}${url}`
 }
 
-function makeGeneratedImage(title = 'e-Knot News', category = 'Город', source = 'e-Knot') {
-  const safeTitle = String(title || 'e-Knot News').replace(/[<>&"']/g, ' ').slice(0, 80)
+function makeGeneratedImage(title = 'HomeNews', category = 'Город', source = 'HomeNews') {
+  const safeTitle = String(title || 'HomeNews').replace(/[<>&"']/g, ' ').slice(0, 80)
   const safeCategory = String(category || 'Город').replace(/[<>&"']/g, ' ').slice(0, 36)
-  const safeSource = String(source || 'e-Knot').replace(/[<>&"']/g, ' ').slice(0, 34)
+  const safeSource = String(source || 'HomeNews').replace(/[<>&"']/g, ' ').slice(0, 34)
 
   const svg = `
   <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
@@ -108,7 +112,7 @@ function makeGeneratedImage(title = 'e-Knot News', category = 'Город', sour
       <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,Helvetica,sans-serif;font-size:58px;line-height:1.08;font-weight:900;color:white;letter-spacing:-2px;">${safeTitle}</div>
     </foreignObject>
     <rect x="70" y="620" width="170" height="14" rx="7" fill="#00a3ad"/>
-    <text x="70" y="685" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="900" fill="#ffffff">e-Knot News</text>
+    <text x="70" y="685" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="900" fill="#ffffff">HomeNews</text>
   </svg>`
 
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`
@@ -118,7 +122,7 @@ function getArticleImage(article, lang) {
   return getMediaUrl(article?.coverImage) || makeGeneratedImage(
     getText(article, 'title', lang),
     getCategoryName(article?.category, lang),
-    article?.source || article?.sourceName || 'e-Knot'
+    article?.source || article?.sourceName || 'HomeNews'
   )
 }
 
@@ -163,7 +167,7 @@ function Placeholder({ compact = false }) {
   return (
     <div className="flex h-full min-h-[140px] w-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-slate-500">
       <div className="text-center">
-        <div className={`${compact ? 'text-lg' : 'text-3xl'} font-black tracking-tight text-slate-600`}>e-Knot</div>
+        <div className={`${compact ? 'text-lg' : 'text-3xl'} font-black tracking-tight text-slate-600`}>HomeNews</div>
         <div className="mx-auto mt-2 h-1 w-12 rounded-full bg-accent" />
       </div>
     </div>
@@ -213,7 +217,7 @@ function Navbar({ lang, setLang, siteName, siteDescription, categories, selected
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-4 py-5">
         <button type="button" onClick={() => setSelectedCategory('all')} className="min-w-0 text-left">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-lg font-black text-primary-foreground">e</div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-lg font-black text-primary-foreground">H</div>
             <div>
               <div className="text-2xl font-black tracking-tight text-foreground md:text-3xl">{siteName}</div>
               <div className="max-w-[560px] truncate text-sm text-muted-foreground">{siteDescription}</div>
@@ -466,7 +470,7 @@ function Footer({ siteSetting, siteName, footerText }) {
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-10 md:grid-cols-[1.4fr_1fr] md:items-end">
         <div>
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-black text-primary-foreground">e</div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary font-black text-primary-foreground">H</div>
             <div className="text-xl font-black tracking-tight text-foreground">{siteName}</div>
           </div>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">{footerText}</p>
@@ -587,9 +591,9 @@ function App() {
     return [...articles].sort((a, b) => new Date(b.publishedAt || b.createdAt || 0) - new Date(a.publishedAt || a.createdAt || 0))
   }, [articles])
 
-  const siteName = getText(siteSetting, 'siteName', lang) || 'e-Knot'
+  const siteName = withCurrentBrand(getText(siteSetting, 'siteName', lang), 'HomeNews')
   const siteDescription = getText(siteSetting, 'description', lang) || UI[lang].descriptionFallback
-  const footerText = getText(siteSetting, 'footerText', lang) || UI[lang].footerFallback
+  const footerText = withCurrentBrand(getText(siteSetting, 'footerText', lang), UI[lang].footerFallback)
 
   if (selectedArticle) {
     return <ArticleDetail article={selectedArticle} lang={lang} setLang={setLang} back={() => setSelectedArticle(null)} />
