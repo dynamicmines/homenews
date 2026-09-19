@@ -1,0 +1,19 @@
+{
+  "name": "homenews",
+  "version": "1.0.0",
+  "private": true,
+  "description": "e-Knot News: Strapi CMS, public frontend and Telegram moderation panel",
+  "scripts": {
+    "setup:env": "node scripts/setup-env.mjs",
+    "install:all": "npm ci --prefix eknot-cms && npm ci --prefix eknot-bot && npm ci --prefix eknot-frontend",
+    "build": "npm run build --prefix eknot-cms && npm run build --prefix eknot-frontend",
+    "lint": "npm run lint --prefix eknot-frontend",
+    "start:cms": "npm run develop --prefix eknot-cms",
+    "start:bot": "npm start --prefix eknot-bot",
+    "start:frontend": "npm run dev --prefix eknot-frontend"
+  },
+  "engines": {
+    "node": ">=20.0.0 <=24.x.x",
+    "npm": ">=10.0.0"
+  }
+}
