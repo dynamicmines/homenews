@@ -12,7 +12,6 @@ const UI = {
     ikomek: 'События iKOMEK109',
     ikomekHint: 'Оперативные уведомления: отключения, аварии, перекрытия и коммунальные события.',
     akimat: 'Новости Акимата',
-    akimatHint: 'Официальные материалы из RSS-ленты Акимата города Астаны.',
     urgent: 'Срочные уведомления',
     ai: 'AI-журналист',
     aiBadge: 'AI Draft',
@@ -43,7 +42,6 @@ const UI = {
     ikomek: 'iKOMEK109 оқиғалары',
     ikomekHint: 'Жедел хабарламалар: ажыратулар, апаттар, жол жабылуы және коммуналдық оқиғалар.',
     akimat: 'Әкімдік жаңалықтары',
-    akimatHint: 'Астана қаласы әкімдігінің RSS-лентасынан алынған ресми материалдар.',
     urgent: 'Шұғыл хабарламалар',
     ai: 'AI-журналист',
     aiBadge: 'AI Draft',
@@ -257,7 +255,6 @@ function Navbar({ lang, setLang, siteName, siteDescription, categories, selected
             <span>{today}</span>
             <span>•</span>
             <span>{UI[lang].city}</span>
-            <span className="hidden md:inline">• iKOME109 + RSS Акимата</span>
           </div>
           <div className="flex items-center gap-3">
             <LanguageSwitcher lang={lang} setLang={setLang} />
@@ -431,7 +428,6 @@ function PortalHome({ lang, articles, categories, selectedCategory, openArticle,
           <section className="min-w-0 space-y-6">
             <div>
               <h2 className="mb-2 text-2xl font-black tracking-tight text-foreground">{UI[lang].akimat}</h2>
-              <p className="mb-5 text-sm text-muted-foreground">{UI[lang].akimatHint}</p>
               {mainAkimat ? (
                 <MainAkimatCard article={mainAkimat} lang={lang} openArticle={openArticle} />
               ) : (
