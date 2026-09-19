@@ -561,11 +561,12 @@ function App() {
 
         if (!articlesRes.ok) throw new Error(UI[lang].error)
         if (!categoriesRes.ok) throw new Error(UI[lang].error)
-        if (!siteSettingRes.ok) throw new Error(UI[lang].error)
+        // Site settings are optional. A fresh Strapi instance returns 404 until
+        // the single type is created; the UI already has sensible fallbacks.
 
         const articlesJson = await articlesRes.json()
         const categoriesJson = await categoriesRes.json()
-        const siteSettingJson = await siteSettingRes.json()
+        const siteSettingJson = siteSettingRes.ok ? await siteSettingRes.json() : { data: null }
         const sourcesJson = sourcesRes?.ok ? await sourcesRes.json() : { data: [] }
 
         setArticles(articlesJson.data || [])
